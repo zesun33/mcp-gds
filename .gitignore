@@ -8,6 +8,7 @@ comp.out
 comp.json
 *.ext
 *_tmp.*
+.lvs_tmp_*
 .DS_Store
 
 # Agent memory / local progress (never commit)
