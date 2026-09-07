@@ -9,9 +9,30 @@ export interface LvsOptions {
   layoutNetlist: string;
   layoutCell: string;
   setupFile?: string;
+  /**
+   * PDK shorthand (currently "sky130A"): resolves the setup file to
+   * <pdk>/sky130A/libs.tech/netgen/sky130A_setup.tcl, where <pdk> is the
+   * mounted volare version dir (MCP_GDS_PDK_ROOT). Explicit setupFile
+   * always wins.
+   */
+  pdk?: string;
   logFile?: string;
   cwd?: string;
   timeoutMs?: number;
+}
+
+const PDK_SETUP_FILES: Record<string, string> = {
+  sky130A: "sky130A/libs.tech/netgen/sky130A_setup.tcl",
+};
+
+export function resolvePdkSetup(pdk: string): string {
+  const rel = PDK_SETUP_FILES[pdk];
+  if (!rel) {
+    throw new Error(
+      `Unknown pdk "${pdk}". Supported: ${Object.keys(PDK_SETUP_FILES).join(", ")}.`
+    );
+  }
+  return `/pdk/${rel}`;
 }
 
 export function parseLvsLog(log: string): { match: boolean | null; netCount1?: number; netCount2?: number; deviceCount1?: number; deviceCount2?: number } {
@@ -65,7 +86,15 @@ export async function runLvs(
   const base = path.resolve(options.cwd || process.cwd());
   const ts = Date.now();
   const log = options.logFile || `.lvs_tmp_${ts}.log`;
-  const setup = options.setupFile ?? "nosetup";
+  let setup = options.setupFile ?? "nosetup";
+  if (!options.setupFile && options.pdk) {
+    try {
+      setup = resolvePdkSetup(options.pdk);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      return fail([message]);
+    }
+  }
 
   // Debian/Ubuntu ship the batch binary off-PATH; upstream installs put
   // `netgen` on PATH. Try PATH first, fall back to the Debian location.

@@ -152,3 +152,48 @@ test("Integration: extract_magic fails gracefully without PDK tech", async () =>
   assert.equal(res.success, false);
   assert.ok(res.errors.length > 0);
 });
+
+const PDK_ROOT = process.env.MCP_GDS_PDK_ROOT || process.env.PDK_ROOT || "";
+const pdkIt = PDK_ROOT ? test : test.skip;
+
+pdkIt("Integration (PDK): extract + LVS sky130 inverter against PDK reference", async () => {
+  // Copies the PDK cell into the workspace (containers only see cwd+/pdk).
+  const cell = "sky130_fd_sc_hd__inv_1.mag";
+  await fs.copyFile(path.join(PDK_ROOT, "sky130A/libs.ref/sky130_fd_sc_hd/mag", cell), path.join(projectRoot, cell));
+  try {
+    const ext = await runExtract(new ToolRunner(), {
+      source: cell,
+      outputSpice: "pdk_inv_tmp.spice",
+      cwd: projectRoot,
+    });
+    assert.equal(ext.success, true, `PDK extract failed: ${ext.errors.join("; ")}`);
+    assert.equal(ext.warnings.length, 0, "PDK tech run must not warn about generic technology");
+
+    const lvs = await runLvs(new ToolRunner(), {
+      schematicNetlist: "/pdk/sky130A/libs.ref/sky130_fd_sc_hd/spice/sky130_fd_sc_hd.spice",
+      schematicCell: "sky130_fd_sc_hd__inv_1",
+      layoutNetlist: "pdk_inv_tmp.spice",
+      layoutCell: "sky130_fd_sc_hd__inv_1",
+      pdk: "sky130A",
+      cwd: projectRoot,
+    });
+    assert.equal(lvs.success, true, `PDK LVS failed: ${lvs.errors.join("; ")}`);
+    assert.equal(lvs.match, true, "Extracted inverter must match the PDK reference");
+  } finally {
+    await fs.rm(path.join(projectRoot, cell), { force: true });
+    await fs.rm(path.join(projectRoot, "pdk_inv_tmp.spice"), { force: true });
+  }
+});
+
+test("Integration: unknown pdk names fail fast with guidance", async () => {
+  const res = await runLvs(runner, {
+    schematicNetlist: "fixtures/inv_a.spice",
+    schematicCell: "inv",
+    layoutNetlist: "fixtures/inv_b.spice",
+    layoutCell: "inv",
+    pdk: "nope_pdk",
+    cwd: projectRoot,
+  });
+  assert.equal(res.success, false);
+  assert.ok(res.errors.some((e) => e.includes("Unknown pdk")));
+});

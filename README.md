@@ -11,6 +11,23 @@
 
 > Scope honesty: geometry decks here are smoke-level sanity checks, not foundry signoff. Netgen compares SPICE-vs-SPICE structurally (`nosetup` by default; pass a PDK setup file for device mapping). Magic runs on generic technology until a PDK tech file is provided. Use `extract_magic` to derive layout netlists, then `lvs_netgen` to compare them.
 
+## Foundry PDK Support (Sky130)
+
+With a Sky130 PDK on disk (fetch once: `volare fetch --pdk sky130 -l sky130_fd_sc_hd <sha>`,
+~770MB), point the server at the volare version dir and the flow turns real:
+
+```bash
+export MCP_GDS_PDK_ROOT=/path/to/pdks/volare/sky130/versions/<sha>
+```
+
+| Capability | Without PDK | With PDK |
+| :--- | :--- | :--- |
+| `lvs_netgen` | structural compare (`nosetup`) | `pdk: "sky130A"` uses the real `sky130A_setup.tcl` with device mapping |
+| `extract_magic` | generic tech (flow plumbing) | `-rcfile` Sky130 tech + `PDK_ROOT=/pdk`: real transistor extraction |
+| `drc_klayout` | generated smoke deck | `pdk: "sky130A"` runs the foundry `sky130A.lydrc` deck |
+
+Validated live: Magic-extracted `sky130_fd_sc_hd__inv_1` (nfet+pfet with areas) matches the PDK reference netlist (`Netlists match uniquely`, 6/6 nets, 2/2 devices). Magic ≥ 8.3.411 is required by the Sky130 tech (the ASIC image ships conda Magic 8.3.486).
+
 ---
 
 ## ⚡ Quick Tour: See It in Action

@@ -6,6 +6,7 @@ dist/
 *.lyrdb
 comp.out
 comp.json
+*_extracted.spice
 *.ext
 *_tmp.*
 .lvs_tmp_*

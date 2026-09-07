@@ -10,10 +10,20 @@ export interface DrcOptions {
   widthUm?: number;
   spaceUm?: number;
   deckFile?: string;
+  /**
+   * PDK shorthand (currently "sky130A"): runs the PDK's own KLayout DRC
+   * deck. Needs MCP_GDS_PDK_ROOT at a volare version dir. Explicit
+   * deckFile always wins.
+   */
+  pdk?: string;
   reportFile?: string;
   cwd?: string;
   timeoutMs?: number;
 }
+
+const PDK_DRC_DECKS: Record<string, string> = {
+  sky130A: "/pdk/sky130A/libs.tech/klayout/drc/sky130A.lydrc",
+};
 
 export function parseLyrdb(xml: string): DrcViolation[] {
   const byRule = new Map<string, { description?: string; count: number }>();
@@ -80,6 +90,14 @@ export async function runDrc(
 
   try {
     let deck = options.deckFile;
+    if (!deck && options.pdk) {
+      deck = PDK_DRC_DECKS[options.pdk];
+      if (!deck) {
+        return fail([
+          `Unknown pdk "${options.pdk}". Supported: ${Object.keys(PDK_DRC_DECKS).join(", ")}.`,
+        ]);
+      }
+    }
     if (!deck) {
       const info = await runGdsInfo(runner, options.gdsFile, options.cwd);
       if (!info.success) {

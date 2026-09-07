@@ -71,7 +71,7 @@ export function createServer(runner: ToolRunner = new ToolRunner()): Server {
     {
       name: "drc_klayout",
       description:
-        "Runs KLayout batch DRC on a GDS file. Default is a generated generic width/space smoke deck over the layout's own layers (geometry sanity, not foundry signoff). Pass deck_file for a real PDK rule deck. Does not do LVS; use lvs_netgen for netlist comparison.",
+        "Runs KLayout batch DRC on a GDS file. Default is a generated generic width/space smoke deck over the layout's own layers (geometry sanity, not foundry signoff). Pass deck_file for a real PDK rule deck, e.g. /pdk/sky130A/libs.tech/klayout/drc/sky130A.lydrc with a mounted PDK. Does not do LVS; use lvs_netgen for netlist comparison.",
       inputSchema: {
         type: "object",
         properties: {
@@ -81,7 +81,11 @@ export function createServer(runner: ToolRunner = new ToolRunner()): Server {
           },
           deck_file: {
             type: "string",
-            description: "Optional custom KLayout .drc rule deck (batch-mode with source()/report()).",
+            description: "Optional custom KLayout rule deck (batch-mode with source()/report()).",
+          },
+          pdk: {
+            type: "string",
+            description: 'PDK shorthand for its KLayout DRC deck, e.g. "sky130A" (needs MCP_GDS_PDK_ROOT at a volare version dir). Explicit deck_file always wins. PDK decks check real foundry rules; expect findings on non-PDK geometry.',
           },
           width_um: {
             type: "number",
@@ -126,6 +130,10 @@ export function createServer(runner: ToolRunner = new ToolRunner()): Server {
             type: "string",
             description: "Optional Netgen setup file for device-class mapping (default: nosetup).",
           },
+          pdk: {
+            type: "string",
+            description: 'PDK shorthand for the setup file, e.g. "sky130A" (needs MCP_GDS_PDK_ROOT pointing at a volare version dir mounted at /pdk). Explicit setup_file always wins.',
+          },
           cwd: {
             type: "string",
             description: "Optional working directory.",
@@ -155,7 +163,7 @@ export function createServer(runner: ToolRunner = new ToolRunner()): Server {
           },
           tech_file: {
             type: "string",
-            description: "Optional Magic technology file (required for device-accurate extraction).",
+            description: 'Optional Magic .magicrc path, or "sky130A" for the mounted PDK tech (needs MCP_GDS_PDK_ROOT at a volare version dir). Defaults to PDK tech when configured, else generic.',
           },
           cwd: {
             type: "string",
@@ -210,6 +218,7 @@ export function createServer(runner: ToolRunner = new ToolRunner()): Server {
           const result = await runDrc(runner, {
             gdsFile: (args.gds_file as string) || "",
             deckFile: args.deck_file as string | undefined,
+            pdk: args.pdk as string | undefined,
             widthUm: typeof args.width_um === "number" ? args.width_um : undefined,
             spaceUm: typeof args.space_um === "number" ? args.space_um : undefined,
             cwd: args.cwd as string | undefined,
@@ -224,6 +233,7 @@ export function createServer(runner: ToolRunner = new ToolRunner()): Server {
             layoutNetlist: (args.layout_netlist as string) || "",
             layoutCell: (args.layout_cell as string) || "",
             setupFile: args.setup_file as string | undefined,
+            pdk: args.pdk as string | undefined,
             cwd: args.cwd as string | undefined,
           });
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
