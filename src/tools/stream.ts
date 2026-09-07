@@ -25,7 +25,8 @@ export async function runStreamOut(
   techLef: string = NANGATE_TECH_LEF,
   macroLef: string = NANGATE_MACRO_LEF,
   cwd?: string,
-  pdk?: string
+  pdk?: string,
+  timeoutMs?: number
 ): Promise<StreamOutResult> {
   const fail = (errors: string[]): StreamOutResult => ({
     success: false, defFile, warnings: [], errors,
@@ -52,7 +53,7 @@ export async function runStreamOut(
     await fs.writeFile(scriptPath, streamOutScript(defFile, techLef, macroLef, out, pdk === "sky130A" ? SKY130_MAP : undefined), "utf-8");
     const res = await runner.execute("klayout", ["-b", "-z", "-r", scriptName], {
       cwd: base,
-      timeoutMs: 120000,
+      timeoutMs: timeoutMs ?? 120000,
     });
 
     let cellsWritten: number | undefined;

@@ -41,6 +41,10 @@ export function createServer(runner: ToolRunner = new ToolRunner()): Server {
             type: "string",
             description: "Optional working directory.",
           },
+          timeout_ms: {
+            type: "number",
+            description: "Timeout in milliseconds (default: 120000).",
+          },
         },
         required: ["gds_file"],
       },
@@ -67,6 +71,10 @@ export function createServer(runner: ToolRunner = new ToolRunner()): Server {
           cwd: {
             type: "string",
             description: "Optional working directory.",
+          },
+          timeout_ms: {
+            type: "number",
+            description: "Timeout in milliseconds (default: 120000).",
           },
         },
         required: ["def_file"],
@@ -102,6 +110,10 @@ export function createServer(runner: ToolRunner = new ToolRunner()): Server {
           cwd: {
             type: "string",
             description: "Optional working directory.",
+          },
+          timeout_ms: {
+            type: "number",
+            description: "Timeout in milliseconds (default: 120000).",
           },
         },
         required: ["gds_file"],
@@ -142,6 +154,10 @@ export function createServer(runner: ToolRunner = new ToolRunner()): Server {
             type: "string",
             description: "Optional working directory.",
           },
+          timeout_ms: {
+            type: "number",
+            description: "Timeout in milliseconds (default: 120000).",
+          },
         },
         required: ["schematic_netlist", "schematic_cell", "layout_netlist", "layout_cell"],
       },
@@ -173,6 +189,10 @@ export function createServer(runner: ToolRunner = new ToolRunner()): Server {
             type: "string",
             description: "Optional working directory.",
           },
+          timeout_ms: {
+            type: "number",
+            description: "Timeout in milliseconds (default: 120000).",
+          },
         },
         required: ["source"],
       },
@@ -201,7 +221,8 @@ export function createServer(runner: ToolRunner = new ToolRunner()): Server {
           const result = await runGdsInfo(
             runner,
             (args.gds_file as string) || "",
-            args.cwd as string | undefined
+            args.cwd as string | undefined,
+            typeof args.timeout_ms === "number" ? args.timeout_ms : undefined
           );
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
@@ -214,7 +235,8 @@ export function createServer(runner: ToolRunner = new ToolRunner()): Server {
             undefined,
             undefined,
             args.cwd as string | undefined,
-            args.pdk as string | undefined
+            args.pdk as string | undefined,
+            typeof args.timeout_ms === "number" ? args.timeout_ms : undefined
           );
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
@@ -227,6 +249,7 @@ export function createServer(runner: ToolRunner = new ToolRunner()): Server {
             widthUm: typeof args.width_um === "number" ? args.width_um : undefined,
             spaceUm: typeof args.space_um === "number" ? args.space_um : undefined,
             cwd: args.cwd as string | undefined,
+            timeoutMs: typeof args.timeout_ms === "number" ? args.timeout_ms : undefined,
           });
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
@@ -240,6 +263,7 @@ export function createServer(runner: ToolRunner = new ToolRunner()): Server {
             setupFile: args.setup_file as string | undefined,
             pdk: args.pdk as string | undefined,
             cwd: args.cwd as string | undefined,
+            timeoutMs: typeof args.timeout_ms === "number" ? args.timeout_ms : undefined,
           });
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
@@ -251,6 +275,7 @@ export function createServer(runner: ToolRunner = new ToolRunner()): Server {
             cell: args.cell as string | undefined,
             techFile: args.tech_file as string | undefined,
             cwd: args.cwd as string | undefined,
+            timeoutMs: typeof args.timeout_ms === "number" ? args.timeout_ms : undefined,
           });
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }

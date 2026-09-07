@@ -39,7 +39,8 @@ export function parseGdsInfoJson(stdout: string): RawInfo | null {
 export async function runGdsInfo(
   runner: ToolRunner,
   gdsFile: string,
-  cwd?: string
+  cwd?: string,
+  timeoutMs?: number
 ): Promise<GdsInfoResult> {
   const fail = (errors: string[]): GdsInfoResult => ({
     success: false, gdsFile, cells: [], topCells: [], layers: [],
@@ -56,7 +57,7 @@ export async function runGdsInfo(
     await fs.writeFile(scriptPath, infoScript(gdsFile), "utf-8");
     const res = await runner.execute("klayout", ["-b", "-z", "-r", scriptName], {
       cwd: base,
-      timeoutMs: 60000,
+      timeoutMs: timeoutMs ?? 60000,
     });
 
     if (res.exitCode !== 0) {
