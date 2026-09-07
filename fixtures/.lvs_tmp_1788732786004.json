@@ -1,0 +1,54 @@
+[
+  {
+   "name": [
+      "inv",
+      "inv"
+   ],
+   "devices": [
+       [
+         ["pmos", 1],
+         ["nmos", 1 ]
+       ], [
+         ["pmos", 1 ],
+         ["nmos", 1 ]
+       ]
+   ],
+   "nets": [
+    4,
+    4
+   ],
+   "badnets": [
+   ],
+   "badelements": [
+   ],
+   "properties": [
+      [
+         [
+           "nmos2",
+           [
+             ["M", "1"]
+           ]
+         ],
+         [
+           "nmos2",
+           [
+             ["M", "2"]
+           ]
+         ]
+      ]
+   ],
+   "pins": [
+      [
+        "out",
+        "in",
+        "vdd",
+        "vss"
+      ], [
+        "out",
+        "in",
+        "vdd",
+        "vss"
+      ]
+   ]
+  }
+]

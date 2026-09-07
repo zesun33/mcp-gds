@@ -1,0 +1,18 @@
+node_modules/
+dist/
+*.log
+*.gds
+*.oas
+*.lyrdb
+comp.out
+comp.json
+*.ext
+*_tmp.*
+.DS_Store
+
+# Agent memory / local progress (never commit)
+MEMORY.md
+MEMORY.local.md
+.memory/
+*.memory.md
+*.local.md

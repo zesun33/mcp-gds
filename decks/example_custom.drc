@@ -1,0 +1,7 @@
+# Example custom KLayout batch DRC deck (used by integration tests).
+# Batch-mode decks must define input via source() and output via report().
+# Run: klayout -b -rd input=layout.gds -rd report=out.lyrdb -r thisfile.drc
+source($input)
+report("example custom deck", $report)
+l1 = input(1, 0)
+l1.width(0.1.um).output("EX.W.1", "example min width 0.1um")
