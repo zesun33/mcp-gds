@@ -7,10 +7,16 @@ import { StreamOutResult } from "../parsers/types.js";
 export const NANGATE_TECH_LEF = "/opt/platforms/nangate45/NangateOpenCellLibrary.tech.lef";
 export const NANGATE_MACRO_LEF = "/opt/platforms/nangate45/NangateOpenCellLibrary.macro.lef";
 
+export const SKY130_TECH_LEF = "/pdk/sky130A/libs.ref/sky130_fd_sc_hd/techlef/sky130_fd_sc_hd__nom.tlef";
+export const SKY130_MACRO_LEF = "/pdk/sky130A/libs.ref/sky130_fd_sc_hd/lef/sky130_fd_sc_hd.lef";
+export const SKY130_MAP = "/pdk/sky130A/libs.tech/klayout/tech/sky130A.map";
+
 /**
  * Streams a DEF layout to GDSII via headless KLayout (abstract-level:
  * standard-cell footprints from LEF; full transistor GDS needs the PDK).
  * Use for handoff previews and KLayout DRC input, not tapeout signoff.
+ * Pass pdk "sky130A" (needs MCP_GDS_PDK_ROOT) to resolve Sky130 macros;
+ * default Nangate45 LEFs cannot read foreign-technology DEFs.
  */
 export async function runStreamOut(
   runner: ToolRunner,
@@ -18,7 +24,8 @@ export async function runStreamOut(
   outGds?: string,
   techLef: string = NANGATE_TECH_LEF,
   macroLef: string = NANGATE_MACRO_LEF,
-  cwd?: string
+  cwd?: string,
+  pdk?: string
 ): Promise<StreamOutResult> {
   const fail = (errors: string[]): StreamOutResult => ({
     success: false, defFile, warnings: [], errors,
@@ -26,13 +33,23 @@ export async function runStreamOut(
 
   if (!defFile) return fail(["No DEF file specified."]);
 
+  if (pdk === "sky130A") {
+    if (!runner.getPdkDir()) {
+      return fail(["Stream-out with pdk 'sky130A' needs the Sky130 PDK: set MCP_GDS_PDK_ROOT to a volare sky130 cache (the <sha> version dir)."]);
+    }
+    techLef = SKY130_TECH_LEF;
+    macroLef = SKY130_MACRO_LEF;
+  } else if (pdk) {
+    return fail([`Unknown pdk '${pdk}'. Supported: 'sky130A'.`]);
+  }
+
   const base = path.resolve(cwd || process.cwd());
   const out = outGds || defFile.replace(/\.def$/i, "") + ".gds";
   const scriptName = `.gds_stream_tmp_${Date.now()}.py`;
   const scriptPath = path.join(base, scriptName);
 
   try {
-    await fs.writeFile(scriptPath, streamOutScript(defFile, techLef, macroLef, out), "utf-8");
+    await fs.writeFile(scriptPath, streamOutScript(defFile, techLef, macroLef, out, pdk === "sky130A" ? SKY130_MAP : undefined), "utf-8");
     const res = await runner.execute("klayout", ["-b", "-z", "-r", scriptName], {
       cwd: base,
       timeoutMs: 120000,

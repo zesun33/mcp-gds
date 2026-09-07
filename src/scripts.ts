@@ -42,12 +42,19 @@ export function streamOutScript(
   defFile: string,
   techLef: string,
   macroLef: string,
-  outGds: string
+  outGds: string,
+  mapFile?: string
 ): string {
+  // A LEF/DEF layer map (e.g. the PDK sky130A.map) is required for real GDS
+  // layer numbers: plain LEF carries no GDS numbers, so without a map KLayout
+  // assigns pseudo-layers and downstream extraction finds no connectivity.
+  const mapLine = mapFile
+    ? `\nopt.lefdef_config.map_file = ${JSON.stringify(mapFile)}`
+    : "";
   return `import pya
 opt = pya.LoadLayoutOptions()
 opt.lefdef_config.read_lef_with_def = False
-opt.lefdef_config.lef_files = [${JSON.stringify(techLef)}, ${JSON.stringify(macroLef)}]
+opt.lefdef_config.lef_files = [${JSON.stringify(techLef)}, ${JSON.stringify(macroLef)}]${mapLine}
 ly = pya.Layout()
 ly.read(${JSON.stringify(defFile)}, opt)
 # Report first so a write failure still leaves diagnostics.

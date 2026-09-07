@@ -197,3 +197,42 @@ test("Integration: unknown pdk names fail fast with guidance", async () => {
   assert.equal(res.success, false);
   assert.ok(res.errors.some((e) => e.includes("Unknown pdk")));
 });
+
+test("Integration: gds_stream_out rejects unknown pdk names", async () => {
+  const res = await runStreamOut(runner, "fixtures/mini.def", "stream_pdk_tmp.gds", undefined, undefined, projectRoot, "nope_pdk");
+  assert.equal(res.success, false);
+  assert.ok(res.errors.some((e) => e.includes("Unknown pdk")), `Expected pdk guidance, got: ${res.errors.join("; ")}`);
+  await fs.rm(path.join(projectRoot, "stream_pdk_tmp.gds"), { force: true });
+});
+
+test("Integration: gds_stream_out rejects sky130 without a visible PDK", async () => {
+  const savedGds = process.env.MCP_GDS_PDK_ROOT;
+  const savedShared = process.env.PDK_ROOT;
+  delete process.env.MCP_GDS_PDK_ROOT;
+  delete process.env.PDK_ROOT;
+  try {
+    const res = await runStreamOut(new ToolRunner(), "fixtures/mini.def", "stream_pdk_tmp.gds", undefined, undefined, projectRoot, "sky130A");
+    assert.equal(res.success, false);
+    assert.ok(res.errors.some((e) => e.includes("MCP_GDS_PDK_ROOT")), `Expected PDK guidance, got: ${res.errors.join("; ")}`);
+  } finally {
+    if (savedGds !== undefined) process.env.MCP_GDS_PDK_ROOT = savedGds;
+    if (savedShared !== undefined) process.env.PDK_ROOT = savedShared;
+  }
+  await fs.rm(path.join(projectRoot, "stream_pdk_tmp.gds"), { force: true });
+});
+
+pdkIt("Integration (PDK): gds_stream_out resolves Sky130 macros with pdk", async () => {
+  const res = await runStreamOut(new ToolRunner(), "fixtures/counter_sky130_dr.def", "stream_sky130_tmp.gds", undefined, undefined, projectRoot, "sky130A");
+  try {
+    assert.equal(res.success, true, `sky130 stream-out failed: ${res.errors.join("; ")}`);
+    assert.ok((res.cellsWritten ?? 0) > 0, "expected cells in streamed GDS");
+    // The PDK layer map must apply: plain LEF carries no GDS numbers, so
+    // without sky130A.map KLayout emits pseudo-layers and extraction finds
+    // no connectivity. met1 must land on its real 68/20.
+    const info = await runGdsInfo(new ToolRunner(), "stream_sky130_tmp.gds", projectRoot);
+    assert.ok(info.success, `gds info failed: ${info.errors.join("; ")}`);
+    assert.ok(info.layers.some((l: { layer: string }) => l.layer === "68/20"), `expected real met1 68/20, got: ${info.layers.map((l: { layer: string }) => l.layer).join(", ")}`);
+  } finally {
+    await fs.rm(path.join(projectRoot, "stream_sky130_tmp.gds"), { force: true });
+  }
+});

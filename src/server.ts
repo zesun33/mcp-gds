@@ -48,7 +48,7 @@ export function createServer(runner: ToolRunner = new ToolRunner()): Server {
     {
       name: "gds_stream_out",
       description:
-        "Streams a DEF layout to GDSII via headless KLayout using Nangate45 LEFs (abstract cell footprints; full transistor GDS needs the PDK). Use to produce DRC input or handoff previews, not tapeout signoff.",
+        "Streams a DEF layout to GDSII via headless KLayout using Nangate45 LEFs (abstract cell footprints; full transistor GDS needs the PDK). Pass pdk 'sky130A' (needs MCP_GDS_PDK_ROOT) to resolve Sky130 macros. Use to produce DRC input or handoff previews, not tapeout signoff.",
       inputSchema: {
         type: "object",
         properties: {
@@ -59,6 +59,10 @@ export function createServer(runner: ToolRunner = new ToolRunner()): Server {
           gds_file: {
             type: "string",
             description: "Output GDSII path (default: <def basename>.gds).",
+          },
+          pdk: {
+            type: "string",
+            description: "Optional PDK for macro resolution ('sky130A' needs MCP_GDS_PDK_ROOT).",
           },
           cwd: {
             type: "string",
@@ -209,7 +213,8 @@ export function createServer(runner: ToolRunner = new ToolRunner()): Server {
             args.gds_file as string | undefined,
             undefined,
             undefined,
-            args.cwd as string | undefined
+            args.cwd as string | undefined,
+            args.pdk as string | undefined
           );
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
