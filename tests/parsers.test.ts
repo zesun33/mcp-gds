@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { parseGdsInfoJson } from "../src/tools/info.js";
-import { parseLyrdb, parseLyrdbDescriptions } from "../src/tools/drc.js";
+import { parseLyrdb, parseLyrdbDescriptions, classifyDrc } from "../src/tools/drc.js";
 import { parseLvsLog } from "../src/tools/lvs.js";
 import { parseExtStats } from "../src/tools/extract.js";
 
@@ -15,6 +15,19 @@ GDSINFO_JSON:{"dbu":0.001,"cells":[{"name":"T","is_top":true,"bbox_dbu":[0,0,100
   assert.equal(raw.cells?.length, 1);
   assert.equal(raw.cells?.[0].name, "T");
   assert.equal(parseGdsInfoJson("no marker here"), null);
+});
+
+test("classifyDrc splits Sky130 li.6 LEF-abstract pins from actionable rules", () => {
+  const { actionable, informational } = classifyDrc([
+    { rule: "li.6", description: "Local Interconnect Width", count: 91 },
+    { rule: "met1.1", description: "metal width", count: 2 },
+    { rule: "licon.8", count: 1 },
+  ]);
+  assert.equal(informational.length, 1);
+  assert.equal(informational[0].rule, "li.6");
+  assert.equal(actionable.length, 2);
+  assert.ok(actionable.some((v) => v.rule === "met1.1"));
+  assert.ok(actionable.some((v) => v.rule === "licon.8"));
 });
 
 test("parseLyrdb counts violations per rule with multiplicity", () => {

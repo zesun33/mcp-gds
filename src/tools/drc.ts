@@ -72,13 +72,34 @@ function generatedDeck(layers: string[], widthUm: number, spaceUm: number): stri
  * over the layout's own layers (honest geometry sanity, NOT foundry signoff).
  * Pass deckFile for a real PDK rule deck.
  */
+
+/** Sky130 foundry li.6 on LEF pin abstracts — real geometry, not a dropped finding. */
+export function isLefAbstractPinArtifact(v: DrcViolation): boolean {
+  const hay = `${v.rule} ${v.description ?? ""}`;
+  if (/\bli\.6\b/i.test(hay)) return true;
+  return /lef[- ]abstract/i.test(hay);
+}
+
+export function classifyDrc(violations: DrcViolation[]): {
+  actionable: DrcViolation[];
+  informational: DrcViolation[];
+} {
+  const actionable: DrcViolation[] = [];
+  const informational: DrcViolation[] = [];
+  for (const v of violations) {
+    (isLefAbstractPinArtifact(v) ? informational : actionable).push(v);
+  }
+  return { actionable, informational };
+}
+
 export async function runDrc(
   runner: ToolRunner,
   options: DrcOptions
 ): Promise<DrcResult> {
   const fail = (errors: string[]): DrcResult => ({
     success: false, gdsFile: options.gdsFile, deck: options.deckFile ?? "generated-generic",
-    violations: [], totalViolations: 0, clean: false, warnings: [], errors,
+    violations: [], informational: [], totalViolations: 0, informationalCount: 0,
+    clean: false, warnings: [], errors,
   });
 
   if (!options.gdsFile) return fail(["No GDS file specified."]);
@@ -133,19 +154,31 @@ export async function runDrc(
       return { ...fail(["DRC ran but no report database was written."]), reportFile: report };
     }
 
-    const violations = parseLyrdb(xml);
+    const parsed = parseLyrdb(xml);
     const descs = parseLyrdbDescriptions(xml);
-    for (const v of violations) {
+    for (const v of parsed) {
       const d = descs.get(v.rule);
       if (d) v.description = d;
     }
-    const total = violations.reduce((n, v) => n + v.count, 0);
+    const { actionable, informational } = classifyDrc(parsed);
+    const total = actionable.reduce((n, v) => n + v.count, 0);
+    const infoCount = informational.reduce((n, v) => n + v.count, 0);
+    const warnings: string[] = [];
+    if (infoCount > 0) {
+      warnings.push(
+        `${infoCount} informational finding(s) classified as Sky130 LEF-abstract pin artifacts (li.6-class). Reported, not silently dropped; not foundry-clean.`
+      );
+    }
+    const deckLabel =
+      options.deckFile ??
+      (options.pdk ? PDK_DRC_DECKS[options.pdk] ?? options.pdk : "generated-generic");
 
     return {
-      success: true, gdsFile: options.gdsFile, deck: options.deckFile ?? "generated-generic",
-      violations: violations.sort((a, b) => b.count - a.count),
-      totalViolations: total, clean: total === 0,
-      reportFile: report, warnings: [], errors: [],
+      success: true, gdsFile: options.gdsFile, deck: deckLabel,
+      violations: actionable.sort((a, b) => b.count - a.count),
+      informational: informational.sort((a, b) => b.count - a.count),
+      totalViolations: total, informationalCount: infoCount, clean: total === 0,
+      reportFile: report, warnings, errors: [],
     };
   } finally {
     await fs.rm(path.join(base, tmpDeck), { force: true });

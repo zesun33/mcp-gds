@@ -1,6 +1,6 @@
 {
   "name": "@zesun33/mcp-gds",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Model Context Protocol (MCP) server for GDSII stream-out, KLayout DRC, Netgen LVS, and Magic extraction",
   "type": "module",
   "bin": {
@@ -12,7 +12,8 @@
     "watch": "tsc --watch",
     "test": "tsx --test tests/**/*.test.ts",
     "test:unit": "tsx --test tests/parsers.test.ts tests/contract.test.ts",
-    "start": "node dist/index.js"
+    "start": "node dist/index.js",
+    "prepublishOnly": "npm run build"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.6.0",
@@ -22,5 +23,19 @@
     "@types/node": "^22.13.0",
     "tsx": "^4.19.2",
     "typescript": "^5.7.3"
+  },
+  "license": "Apache-2.0",
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/zesun33/mcp-gds.git"
+  },
+  "engines": {
+    "node": ">=18"
   }
 }

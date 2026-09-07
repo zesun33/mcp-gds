@@ -40,8 +40,12 @@ export interface DrcResult {
   success: boolean;
   gdsFile: string;
   deck: string;
+  /** Actionable foundry/geometry hits (excludes classified LEF-abstract pin artifacts). */
   violations: DrcViolation[];
+  /** Sky130 li.6-class LEF-abstract pin hits: reported, not dropped, not treated as clean-fail. */
+  informational: DrcViolation[];
   totalViolations: number;
+  informationalCount: number;
   clean: boolean;
   reportFile?: string;
   warnings: string[];
