@@ -39,7 +39,7 @@ Validated live: Magic-extracted `sky130_fd_sc_hd__inv_1` (nfet+pfet with areas) 
 // Tool Call: gds_toolchain_info
 {
   "runtime": "podman",
-  "image": "localhost/zesun33/asic",
+  "image": "ghcr.io/zesun33/asic",
   "klayoutVersion": "KLayout 0.28.16",
   "magicVersion": "Magic 8.3 revision 105",
   "netgenVersion": "Netgen 1.5.133"
@@ -108,16 +108,26 @@ Validated live: Magic-extracted `sky130_fd_sc_hd__inv_1` (nfet+pfet with areas) 
 
 ## Execution Runtime
 
-`mcp-gds` runs tools inside the [`zesun33/asic`](https://github.com/zesun33/eda-docker-images) rootless Podman image (`localhost/zesun33/asic`), with the repo's `platforms/` directory mounted read-only at `/opt/platforms` for LEF access:
+`mcp-gds` runs inside the [`zesun33/asic`](https://github.com/zesun33/eda-docker-images) rootless Podman image so tools are identical on any Linux host.
 
-- Container mount: `-v <workspace>:/workspace:Z -w /workspace` plus `-v <platforms>:/opt/platforms:ro,Z`
+**Public install (recommended — anyone can pull):**
+```bash
+podman pull ghcr.io/zesun33/asic:latest
+export MCP_GDS_IMAGE=ghcr.io/zesun33/asic
+```
+
+Local builds from `eda-docker-images` still work as `localhost/zesun33/asic` (the historical default). Override anytime with `MCP_GDS_IMAGE`.
+
+- Container mount: `-v <workspace>:/workspace:Z -w /workspace`
 - Podman storage option: `--storage-opt overlay.ignore_chown_errors=true`
 
 To force host binaries instead of container execution:
-
 ```bash
 export MCP_GDS_RUNTIME=host
 ```
+
+The repo `platforms/` directory is mounted read-only at `/opt/platforms` for LEF access. For Sky130 signoff, also set `MCP_GDS_PDK_ROOT` to a host volare cache (see [`eda-docker-images`](https://github.com/zesun33/eda-docker-images) PDK section).
+
 
 ---
 
