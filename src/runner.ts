@@ -22,16 +22,24 @@ export interface RunResult {
 
 export type RuntimeType = "podman" | "docker" | "host";
 
+function existingDir(p: string): string | null {
+  try {
+    return fs.statSync(p).isDirectory() ? p : null;
+  } catch {
+    return null;
+  }
+}
+
 export class ToolRunner {
   private runtime: RuntimeType;
   private imageName: string;
-  private platformsDir: string;
+  private platformsDir: string | null;
   private pdkDir: string | null;
 
   constructor() {
     const envRuntime = process.env.MCP_GDS_RUNTIME as RuntimeType | undefined;
-    this.imageName = process.env.MCP_GDS_IMAGE || "localhost/zesun33/asic";
-    this.platformsDir = path.resolve(projectRoot, "platforms");
+    this.imageName = process.env.MCP_GDS_IMAGE || "ghcr.io/zesun33/asic";
+    this.platformsDir = existingDir(path.resolve(projectRoot, "platforms"));
     // Optional PDK variant dir (the one containing libs.tech/libs.ref),
     // e.g. <cache>/volare/sky130/versions/<sha>/sky130A. Mounted at /pdk.
     const pdkEnv = process.env.MCP_GDS_PDK_ROOT || process.env.PDK_ROOT || "";
@@ -108,9 +116,10 @@ export class ToolRunner {
       if (this.pdkDir) {
         containerArgs.push("-v", `${this.pdkDir}:/pdk:ro,Z`);
       }
+      if (this.platformsDir) {
+        containerArgs.push("-v", `${this.platformsDir}:/opt/platforms:ro,Z`);
+      }
       containerArgs.push(
-        "-v",
-        `${this.platformsDir}:/opt/platforms:ro,Z`,
         "-v",
         `${cwd}:/workspace:Z`,
         "-w",

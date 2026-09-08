@@ -1,6 +1,6 @@
 {
   "name": "@zesun33/mcp-gds",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Model Context Protocol (MCP) server for GDSII stream-out, KLayout DRC, Netgen LVS, and Magic extraction",
   "type": "module",
   "bin": {
@@ -26,7 +26,8 @@
   },
   "license": "Apache-2.0",
   "files": [
-    "dist"
+    "dist",
+    "platforms"
   ],
   "publishConfig": {
     "access": "public"
