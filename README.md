@@ -11,6 +11,16 @@
 
 > Scope honesty: geometry decks here are smoke-level sanity checks, not foundry signoff. Netgen compares SPICE-vs-SPICE structurally (`nosetup` by default; pass a PDK setup file for device mapping). Magic runs on generic technology until a PDK tech file is provided. Use `extract_magic` to derive layout netlists, then `lvs_netgen` to compare them.
 
+## Install and run
+
+Run this MCP server directly from npm:
+
+```bash
+npx -y @zesun33/mcp-gds
+```
+
+For the complete hardware-agent setup, use `npx -y @zesun33/create-hw-agent my-asic`.
+
 ## Foundry PDK Support (Sky130)
 
 With a Sky130 PDK on disk (fetch once: `volare fetch --pdk sky130 -l sky130_fd_sc_hd <sha>`,
