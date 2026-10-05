@@ -1,5 +1,26 @@
 # @zesun33/mcp-gds
 
+<!-- BEGIN GENERATED PROJECT GUIDE -->
+
+## Purpose and first steps
+
+Inspect layouts, stream out GDS, and run geometry or netlist checks through an MCP server.
+
+**Who it is for:** Hardware engineers using an MCP-capable client or coding agent.
+
+**First task:** Configure the server in your MCP client, then call `gds_toolchain_info` before running a design.
+
+**What to expect:** Tool availability, then layout summaries and check results for the chosen inputs/decks.
+
+**Current scope:** Published MCP server for layout and netlist checks. Smoke geometry checks use the selected deck; PDK-specific extraction/LVS requires appropriate technology and setup files. The npx command waits for an MCP client.
+
+**Start here:** [Runtime requirements and configuration](README.md#execution-runtime).
+
+**Related projects:** [mcp-openroad](https://github.com/zesun33/mcp-openroad), [agentic-asic](https://github.com/zesun33/agentic-asic).
+
+[Choose another project](https://github.com/zesun33/personal-projects/blob/main/GETTING_STARTED.md).
+<!-- END GENERATED PROJECT GUIDE -->
+
 > Model Context Protocol (MCP) server for GDSII stream-out, KLayout DRC, Netgen LVS, and Magic extraction.
 
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](./LICENSE)
@@ -42,7 +63,9 @@ Validated live: Magic-extracted `sky130_fd_sc_hd__inv_1` (nfet+pfet with areas) 
 
 ## ⚡ Quick Tour: See It in Action
 
-### Real Agent Scenarios in 60 Seconds
+The examples below illustrate tool requests and result fields. Timings, counts, and scores depend on the input and runtime; they are not guaranteed outcomes or fresh verification results.
+
+### Example tool requests and results
 
 #### 1. Probing the Toolchain (Zero-Config Verification)
 ```json
